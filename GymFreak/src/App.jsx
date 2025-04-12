@@ -1,117 +1,104 @@
-import React, { useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import GymEquipmentPage from "./Pages/GymEquipmentPage";
-import ShoppingCartPage from "./Pages/ShoppingCartPage";
-import Dashboard from "./Pages/Dashboard";
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
+import { AppBar, Toolbar, Button, Container } from "@mui/material";
 import Login from "./Pages/Login";
-import SignUp from "./Pages/SignUp";
-import Home from "./Pages/Home";
-import ReferPage from "./Pages/ReferPage";
-import DietPlanPage from "./Pages/DietPlan";
-import PaymentPage from "./Pages/PaymentPage";
+import Dashboard from "./Pages/Dashboard";
 import AdminDashboard from "./AdminPages/AdminDashboard";
-import ManageUsers from "./AdminPages/ManageUsers";
+import Members from "./AdminPages/Members";
+import Home from "./Pages/Home";
 
-// Temporary Navbar component (add this if you don't have one)
-const Navbar = ({ isAuthenticated, onLogout }) => {
+// Main App component
+function AppWrapper() {
   return (
-    <nav style={{ padding: "1rem", background: "#eee" }}>
-      <a href="/" style={{ marginRight: "1rem" }}>
-        Home
-      </a>
-      {isAuthenticated ? (
-        <button onClick={onLogout}>Logout</button>
-      ) : (
-        <a href="/login" style={{ marginRight: "1rem" }}>
-          Login
-        </a>
-      )}
-    </nav>
+    <Router>
+      <App />
+    </Router>
   );
-};
+}
 
-const App = () => {
-  const [cartItems, setCartItems] = useState([]);
+// Your existing App logic
+function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
     localStorage.getItem("authToken") !== null
   );
+  const navigate = useNavigate();
 
-  const handleAddToCart = (item) => {
-    setCartItems((prevCartItems) => {
-      const existingItem = prevCartItems.find(
-        (cartItem) => cartItem.id === item.id
-      );
-      if (existingItem) {
-        return prevCartItems.map((cartItem) =>
-          cartItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        );
-      }
-      return [...prevCartItems, { ...item, quantity: 1 }];
-    });
-  };
+  useEffect(() => {
+    if (localStorage.getItem("authToken")) {
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   const handleLogin = () => {
     localStorage.setItem("authToken", "dummy-token");
     setIsAuthenticated(true);
+    navigate("/dashboard");
   };
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     setIsAuthenticated(false);
-    window.location.href = "/login";
+    navigate("/login");
   };
 
   return (
-    <BrowserRouter>
-      <Navbar isAuthenticated={isAuthenticated} onLogout={handleLogout} />
+    <>
+      <AppBar position="static">
+        <Toolbar>
+          <Container>
+            {isAuthenticated ? (
+              <Button color="inherit" onClick={handleLogout}>
+                Logout
+              </Button>
+            ) : (
+              <Button color="inherit" href="/login">
+                Login
+              </Button>
+            )}
+          </Container>
+        </Toolbar>
+      </AppBar>
 
       <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/home" element={<Home />} />
         <Route
-          path="/gymequipment"
-          element={<GymEquipmentPage onAddToCart={handleAddToCart} />}
+          path="/dashboard"
+          element={
+            isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />
+          }
         />
-        <Route
-          path="/shoppingcart"
-          element={<ShoppingCartPage cartItems={cartItems} />}
-        />
-        <Route path="/referafriend" element={<ReferPage />} />
-        <Route path="/dietplan" element={<DietPlanPage />} />
-        <Route path="/payment" element={<PaymentPage />} />
-
-        {/* Protected Admin Routes */}
         <Route
           path="/admin"
           element={
             isAuthenticated ? (
-              <AdminDashboard onLogout={handleLogout} />
+              <AdminDashboard />
             ) : (
               <Navigate to="/login" replace />
             )
           }
         />
         <Route
-          path="/admin/users"
+          path="/admin/members"
           element={
-            isAuthenticated ? (
-              <ManageUsers onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            isAuthenticated ? <Members /> : <Navigate to="/login" replace />
           }
         />
-
-        {/* Catch-all route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path="/"
+          element={
+            <Navigate to={isAuthenticated ? "/dashboard" : "/home"} replace />
+          }
+        />
       </Routes>
-    </BrowserRouter>
+    </>
   );
-};
+}
 
-export default App;
+export default AppWrapper;
