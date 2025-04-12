@@ -1,0 +1,11 @@
+# Frontend (gymfreak)
+gymfreak/node_modules/
+gymfreak/.env
+gymfreak/dist/
+gymfreak/.DS_Store
+
+# Backend (gymfreak-backend)
+gymfreak-backend/vendor/
+gymfreak-backend/.env
+gymfreak-backend/storage/logs/*
+gymfreak-backend/bootstrap/cache/*
