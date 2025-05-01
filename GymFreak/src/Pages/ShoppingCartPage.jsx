@@ -1,74 +1,153 @@
-const ShoppingCartPage = ({ cartItems, onRemoveItem, onQuantityChange }) => {
+import React, { useState, useEffect } from "react";
+import { Button } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+
+const ShoppingCartPage = () => {
+  const [cartItems, setCartItems] = useState([]);
+  const navigate = useNavigate();
+
+  // Fetch cart items from localStorage on mount
+  useEffect(() => {
+    const storedItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+    setCartItems(storedItems);
+  }, []);
+
+  // Update localStorage when cart changes
+  const updateLocalStorage = (items) => {
+    localStorage.setItem("cartItems", JSON.stringify(items));
+  };
+
+  // Handle adding item to cart
+  const handleAddToCart = (item) => {
+    setCartItems((prevItems) => {
+      // Check if the item already exists in the cart
+      const itemIndex = prevItems.findIndex(
+        (cartItem) => cartItem.id === item.id
+      );
+
+      if (itemIndex !== -1) {
+        // Item exists, update its quantity
+        const updatedItems = [...prevItems];
+        updatedItems[itemIndex].quantity += 1;
+        updateLocalStorage(updatedItems); // Update localStorage
+        return updatedItems;
+      } else {
+        // Item doesn't exist, add it to the cart
+        const updatedItems = [...prevItems, { ...item, quantity: 1 }];
+        updateLocalStorage(updatedItems); // Update localStorage
+        return updatedItems;
+      }
+    });
+  };
+
+  // Handle quantity change (increase or decrease)
+  const handleQuantityChange = (itemId, change) => {
+    setCartItems((prevItems) => {
+      const updatedItems = prevItems
+        .map((item) => {
+          if (item.id === itemId) {
+            const updatedItem = { ...item, quantity: item.quantity + change };
+            if (updatedItem.quantity <= 0) {
+              return null; // Don't add it to the updated list if quantity is <= 0
+            }
+            return updatedItem;
+          }
+          return item;
+        })
+        .filter(Boolean); // Remove null items (those with quantity <= 0)
+
+      updateLocalStorage(updatedItems); // Update localStorage
+      return updatedItems;
+    });
+  };
+
+  // Remove an item from the cart
+  const handleRemoveItem = (itemId) => {
+    setCartItems((prevItems) => {
+      const updatedItems = prevItems.filter((item) => item.id !== itemId);
+      updateLocalStorage(updatedItems); // Update localStorage
+      return updatedItems;
+    });
+  };
+
+  // Calculate the total price of the cart
   const calculateTotal = () => {
-    return cartItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+    return cartItems
+      .reduce((total, item) => total + item.price * item.quantity, 0)
+      .toFixed(2);
+  };
+
+  // Handle checkout process
+  const handleCheckout = () => {
+    if (cartItems.length === 0) {
+      alert("Your cart is empty!");
+      return;
+    }
+    navigate("/payment"); // Proceed to payment page
   };
 
   return (
-    <div className="min-h-screen bg-primary text-light p-8">
-      <h1 className="text-4xl font-bold text-center mb-8">Shopping Cart</h1>
-      {cartItems.length > 0 ? (
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-3 gap-6 text-center mb-4">
-            <div className="font-semibold">Product</div>
-            <div className="font-semibold">Quantity</div>
-            <div className="font-semibold">Price</div>
-          </div>
-          <div>
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-4">Your Shopping Cart</h2>
+
+      {cartItems.length === 0 ? (
+        <p>Your cart is empty.</p>
+      ) : (
+        <>
+          <ul className="space-y-4">
             {cartItems.map((item) => (
-              <div
+              <li
                 key={item.id}
-                className="grid grid-cols-3 gap-6 items-center text-center mb-6 bg-secondary p-4 rounded-md"
+                className="flex justify-between items-center border-b pb-4"
               >
-                <div>
-                  <p className="font-bold">{item.name}</p>
-                  <button
-                    onClick={() => onRemoveItem(item.id)}
-                    className="text-red-500 text-sm underline hover:text-red-300"
-                  >
-                    Remove
-                  </button>
+                <div className="flex items-center">
+                  <p className="font-semibold text-lg">{item.name}</p>
+                  <p className="ml-4 text-gray-500">${item.price}</p>
                 </div>
-                <div className="flex items-center justify-center gap-2">
-                  <button
-                    onClick={() => onQuantityChange(item.id, -1)}
-                    className="bg-accent text-light px-3 py-1 rounded-md hover:bg-light hover:text-primary transition"
+
+                <div className="flex items-center">
+                  <Button
+                    onClick={() => handleQuantityChange(item.id, -1)}
+                    disabled={item.quantity <= 1}
+                    variant="outlined"
+                    color="primary"
+                    className="mr-2"
                   >
                     -
-                  </button>
+                  </Button>
                   <span>{item.quantity}</span>
-                  <button
-                    onClick={() => onQuantityChange(item.id, 1)}
-                    className="bg-accent text-light px-3 py-1 rounded-md hover:bg-light hover:text-primary transition"
+                  <Button
+                    onClick={() => handleQuantityChange(item.id, 1)}
+                    variant="outlined"
+                    color="primary"
+                    className="ml-2"
                   >
                     +
-                  </button>
+                  </Button>
+
+                  <Button
+                    onClick={() => handleRemoveItem(item.id)}
+                    variant="outlined"
+                    color="error"
+                    className="ml-4"
+                  >
+                    Remove
+                  </Button>
                 </div>
-                <div>
-                  <p>${(item.price * item.quantity).toFixed(2)}</p>
-                </div>
-              </div>
+              </li>
             ))}
-          </div>
-          <div className="text-right mt-6">
-            <p className="text-lg font-semibold">
-              Total:{" "}
-              <span className="text-accent">
-                ${calculateTotal().toFixed(2)}
-              </span>
-            </p>
-            <button
-              onClick={() => alert("Proceeding to checkout!")}
-              className="mt-4 bg-accent text-light py-3 px-6 rounded-md hover:bg-light hover:text-primary transition"
+          </ul>
+
+          <div className="mt-4 flex justify-between items-center">
+            <p className="font-semibold">Total: ${calculateTotal()}</p>
+            <Button
+              onClick={handleCheckout}
+              className="bg-accent text-light py-2 px-4 rounded-md"
             >
-              Checkout
-            </button>
+              Proceed to Checkout
+            </Button>
           </div>
-        </div>
-      ) : (
-        <p className="text-center text-lg">Your cart is empty.</p>
+        </>
       )}
     </div>
   );

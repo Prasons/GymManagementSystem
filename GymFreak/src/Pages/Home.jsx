@@ -31,6 +31,13 @@ const LandingPage = () => {
             </li>
             <li
               className="cursor-pointer hover:text-accent"
+              onClick={() => navigate("/admin-login")}
+            >
+              Admin Login
+            </li>
+
+            <li
+              className="cursor-pointer hover:text-accent"
               onClick={() => navigate("/signup")}
             >
               Sign Up

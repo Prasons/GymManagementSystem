@@ -1,33 +1,73 @@
-import React, { useState } from "react";
+import React from "react";
 
 const GymEquipmentPage = ({ onAddToCart }) => {
   const equipmentData = [
     {
       category: "Protein Powder",
       items: [
-        { id: 1, name: "Whey Protein", price: 50 },
-        { id: 2, name: "Casein Protein", price: 45 },
+        {
+          id: 1,
+          name: "Whey Protein",
+          price: 50,
+          image: "/images/whey-protein.jpg",
+        },
+        {
+          id: 2,
+          name: "Casein Protein",
+          price: 45,
+          image: "/images/casein-protein.jpg",
+        },
       ],
     },
     {
       category: "Creatine",
       items: [
-        { id: 3, name: "Creatine Monohydrate", price: 30 },
-        { id: 4, name: "Micronized Creatine", price: 35 },
+        {
+          id: 3,
+          name: "Creatine Monohydrate",
+          price: 30,
+          image: "/images/creatine-mono.jpg",
+        },
+        {
+          id: 4,
+          name: "Micronized Creatine",
+          price: 35,
+          image: "/images/creatine-micronized.jpg",
+        },
       ],
     },
     {
       category: "Gym Merchandise",
       items: [
-        { id: 5, name: "Gym T-Shirt", price: 25 },
-        { id: 6, name: "Gym Cap", price: 15 },
+        {
+          id: 5,
+          name: "Gym T-Shirt",
+          price: 25,
+          image: "/images/gym-shirt.jpg",
+        },
+        {
+          id: 6,
+          name: "Gym Cap",
+          price: 15,
+          image: "/images/gym-cap.jpg",
+        },
       ],
     },
     {
       category: "Gym Accessories",
       items: [
-        { id: 7, name: "Resistance Bands", price: 20 },
-        { id: 8, name: "Skipping Rope", price: 10 },
+        {
+          id: 7,
+          name: "Resistance Bands",
+          price: 20,
+          image: "/images/resistance-bands.jpg",
+        },
+        {
+          id: 8,
+          name: "Skipping Rope",
+          price: 10,
+          image: "/images/skipping-rope.jpg",
+        },
       ],
     },
   ];
@@ -44,6 +84,11 @@ const GymEquipmentPage = ({ onAddToCart }) => {
                 key={item.id}
                 className="bg-secondary p-4 rounded-lg flex flex-col items-center"
               >
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="w-full h-40 object-cover mb-4 rounded"
+                />
                 <p className="font-semibold text-lg">{item.name}</p>
                 <p className="text-accent text-sm">${item.price}</p>
                 <button

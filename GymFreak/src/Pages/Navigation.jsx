@@ -17,7 +17,7 @@ const Navigation = ({ isAuthenticated, onLogout }) => {
       {isAuthenticated ? (
         <>
           <Link to="/admin">Admin</Link>
-          <button onClick={onLogout}>Logout</button>
+          <button onClick={onLogout}>Logout</button> {/* The logout button */}
         </>
       ) : (
         <Link to="/login">Login</Link>
