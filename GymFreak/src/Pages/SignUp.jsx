@@ -5,7 +5,7 @@ const SignUp = () => {
     <div className="min-h-screen flex items-center justify-center bg-primary">
       <div className="bg-secondary p-8 rounded-lg shadow-lg max-w-md w-full">
         <h2 className="text-3xl font-bold text-light text-center mb-6">
-          Sign Up
+          Sign Up 
         </h2>
         <form>
           <div className="mb-4">
