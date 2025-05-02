@@ -1,6 +1,6 @@
 import React from "react";
 
-const SignUpForm = () => {
+const SignUp = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-primary">
       <div className="bg-secondary p-8 rounded-lg shadow-lg max-w-md w-full">
@@ -67,4 +67,4 @@ const SignUpForm = () => {
   );
 };
 
-export default SignUpForm;
+export default SignUp;

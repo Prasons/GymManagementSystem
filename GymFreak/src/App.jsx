@@ -11,6 +11,7 @@ import { AppBar, Toolbar, Button } from "@mui/material";
 
 // Pages
 import Login from "./Pages/Login";
+import SignUp from "./Pages/SignUp";
 import Home from "./Pages/Home";
 import Dashboard from "./Pages/Dashboard";
 import Membership from "./Pages/MembershipPage";
@@ -102,6 +103,9 @@ function App() {
                 <Button color="inherit" href="/admin/login">
                   Admin Login
                 </Button>
+                <Button color="inherit" href="/signup">
+                  Sign Up
+                </Button>
               </>
             )}
           </Toolbar>
@@ -121,7 +125,7 @@ function App() {
             )
           }
         />
-
+        <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/home" element={<Home />} />
         <Route
