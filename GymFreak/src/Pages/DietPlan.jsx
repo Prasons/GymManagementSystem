@@ -1,130 +1,195 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { getDietPlans, setUserDietPlan, getUserDietPlan, removeUserDietPlan } from "../api/dietPlanApi";
+import axios from "axios";
 
 const DietPlanPage = () => {
-  const [selectedCategory, setSelectedCategory] = useState("Weight Loss");
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [dietPlans, setDietPlans] = useState([]);
+  const [selectedPlanIds, setSelectedPlanIds] = useState([]);
+  const [userPlans, setUserPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  const dietPlans = {
-    "Weight Loss": [
-      {
-        id: 1,
-        name: "Low Carb Plan",
-        details:
-          "This plan focuses on reducing carbs and increasing protein intake.",
-        meals: [
-          "Breakfast: Eggs & Avocado",
-          "Lunch: Grilled Chicken Salad",
-          "Dinner: Baked Salmon & Veggies",
-        ],
-      },
-      {
-        id: 2,
-        name: "Keto Plan",
-        details: "High fat and low carb plan designed for weight loss.",
-        meals: [
-          "Breakfast: Bulletproof Coffee",
-          "Lunch: Zucchini Noodles & Meatballs",
-          "Dinner: Steak & Broccoli",
-        ],
-      },
-    ],
-    "Muscle Gain": [
-      {
-        id: 3,
-        name: "High Protein Plan",
-        details: "This plan increases protein intake for muscle growth.",
-        meals: [
-          "Breakfast: Protein Smoothie",
-          "Lunch: Grilled Chicken & Rice",
-          "Dinner: Beef Steak & Sweet Potato",
-        ],
-      },
-      {
-        id: 4,
-        name: "Mass Gainer Plan",
-        details: "Includes calorie-dense meals to help gain mass.",
-        meals: [
-          "Breakfast: Oatmeal & Banana",
-          "Lunch: Chicken Pasta",
-          "Dinner: Salmon & Quinoa",
-        ],
-      },
-    ],
-    Maintenance: [
-      {
-        id: 5,
-        name: "Balanced Diet Plan",
-        details: "A balanced plan to maintain weight and health.",
-        meals: [
-          "Breakfast: Greek Yogurt & Berries",
-          "Lunch: Turkey Sandwich",
-          "Dinner: Grilled Fish & Veggies",
-        ],
-      },
-    ],
+  useEffect(() => {
+    const fetchPlans = async () => {
+      setLoading(true);
+      try {
+        const plans = await getDietPlans();
+        setDietPlans(plans);
+      } catch (err) {
+        setError("Failed to load diet plans");
+      }
+      setLoading(false);
+    };
+    fetchPlans();
+  }, []);
+
+  useEffect(() => {
+    const fetchUserPlans = async () => {
+      try {
+        const plans = await getUserDietPlan();
+        if (Array.isArray(plans)) {
+          setUserPlans(plans);
+          setSelectedPlanIds(plans.map((p) => p.id));
+        } else if (plans && typeof plans === 'object') {
+          setUserPlans([plans]);
+          setSelectedPlanIds([plans.id]);
+        } else {
+          setUserPlans([]);
+          setSelectedPlanIds([]);
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+    fetchUserPlans();
+  }, []);
+
+  const handleSelectPlan = (planId) => {
+    setSelectedPlanIds((prev) =>
+      prev.includes(planId) ? prev.filter((id) => id !== planId) : [...prev, planId]
+    );
   };
 
-  const handleCategoryChange = (category) => {
-    setSelectedCategory(category);
-    setSelectedPlan(null);
+  const handleSavePlans = async () => {
+    setSaving(true);
+    try {
+      await setUserDietPlan(selectedPlanIds);
+      const selectedPlans = dietPlans.filter((p) => selectedPlanIds.includes(p.id));
+      setUserPlans(selectedPlans);
+    } catch (err) {
+      setError("Failed to save selected diet plans");
+    }
+    setSaving(false);
   };
+
+  // Delete all user's selected diet plans
+  const handleDeleteUserPlan = async () => {
+    if (!window.confirm("Are you sure you want to remove all your selected diet plans?")) return;
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      await axios.delete("http://localhost:8080/api/dietplans/user/selected", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUserPlans([]);
+      setSelectedPlanIds([]);
+    } catch (err) {
+      setError("Failed to delete your selected diet plans");
+    }
+    setSaving(false);
+  };
+
+  // Remove a single diet plan from user's selection
+  const handleRemoveSinglePlan = async (planId) => {
+    if (!window.confirm("Remove this diet plan from your selection?")) return;
+    setSaving(true);
+    try {
+      await removeUserDietPlan(planId);
+      setUserPlans((prev) => prev.filter((p) => p.id !== planId));
+      setSelectedPlanIds((prev) => prev.filter((id) => id !== planId));
+    } catch (err) {
+      setError("Failed to remove the diet plan");
+    }
+    setSaving(false);
+  };
+
+
+
 
   return (
-    <div className="min-h-screen bg-primary text-light p-8">
-      <h1 className="text-4xl font-bold text-center mb-8">Diet Plans</h1>
+    <div className="py-10 px-4 max-w-4xl mx-auto min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
+      <h2 className="text-3xl font-bold mb-8 text-center text-primary">Explore Diet Plans</h2>
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <span className="text-lg text-gray-600 animate-pulse">Loading diet plans...</span>
+        </div>
+      ) : error ? (
+        <div className="flex justify-center items-center h-40">
+          <span className="text-lg text-red-500">{error}</span>
+        </div>
+      ) : null}
 
-      {/* Category Selection */}
-      <div className="flex justify-center gap-4 mb-8">
-        {Object.keys(dietPlans).map((category) => (
-          <button
-            key={category}
-            onClick={() => handleCategoryChange(category)}
-            className={`py-2 px-4 rounded-md font-semibold transition ${
-              selectedCategory === category
-                ? "bg-accent text-light"
-                : "bg-secondary text-light hover:bg-accent hover:text-primary"
-            }`}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
-
-      {/* Diet Plans List */}
-      {!selectedPlan ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {dietPlans[selectedCategory].map((plan) => (
+      {/* Always show main list if not loading/error */}
+      {!loading && !error && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          {dietPlans.map((plan) => (
             <div
               key={plan.id}
-              className="bg-secondary p-6 rounded-md hover:bg-accent hover:text-primary transition cursor-pointer"
-              onClick={() => setSelectedPlan(plan)}
+              className={`rounded-xl shadow-lg bg-white p-6 flex flex-col border-2 transition hover:scale-105 duration-150 ${selectedPlanIds.includes(plan.id) ? 'border-green-500' : 'border-transparent'}`}
             >
-              <h3 className="text-xl font-bold">{plan.name}</h3>
-              <p className="mt-2 text-sm">{plan.details}</p>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-blue-700 mb-1">{plan.name}</h3>
+                <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded mb-2">{plan.category}</span>
+                <p className="mb-3 text-gray-700 min-h-[48px]">{plan.description}</p>
+                <div>
+                  <h4 className="font-semibold mb-1 text-sm text-gray-800">Meals:</h4>
+                  <ul className="list-disc list-inside text-gray-600 text-sm space-y-1">
+                    {plan.meals && plan.meals.map((meal, idx) => (
+                      <li key={idx}>{typeof meal === "string" ? meal : JSON.stringify(meal)}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              <label className="flex items-center mt-6">
+                <input
+                  type="checkbox"
+                  checked={selectedPlanIds.includes(plan.id)}
+                  onChange={() => handleSelectPlan(plan.id)}
+                  disabled={saving}
+                  className="mr-2"
+                />
+                <span className="font-semibold">{selectedPlanIds.includes(plan.id) ? "Selected" : "Select this plan"}</span>
+              </label>
             </div>
           ))}
-        </div>
-      ) : (
-        // Diet Plan Details
-        <div className="max-w-3xl mx-auto bg-secondary p-6 rounded-md">
           <button
-            onClick={() => setSelectedPlan(null)}
-            className="text-accent underline hover:text-light mb-4 block"
+            onClick={handleSavePlans}
+            disabled={saving || selectedPlanIds.length === 0}
+            className="mt-6 py-2 px-4 rounded-lg w-full font-semibold transition bg-blue-600 text-white hover:bg-blue-700"
           >
-            Back to Plans
+            {saving ? "Saving..." : "Save Selected Plans"}
           </button>
-          <h2 className="text-2xl font-bold mb-4">{selectedPlan.name}</h2>
-          <p className="mb-4">{selectedPlan.details}</p>
-          <h3 className="text-xl font-semibold mb-2">Meals:</h3>
-          <ul className="list-disc list-inside">
-            {selectedPlan.meals.map((meal, index) => (
-              <li key={index} className="mb-2">
-                {meal}
-              </li>
-            ))}
-          </ul>
         </div>
       )}
+
+      {/* Only show selected plan section if userPlan exists */}
+      {userPlans && userPlans.length > 0 && (
+          <div className="max-w-xl mx-auto bg-white rounded-xl shadow-lg p-8 border-l-4 border-green-500">
+            <h3 className="text-2xl font-bold text-green-700 mb-2 text-center">Your Selected Diet Plans</h3>
+            {userPlans.map((plan) => (
+              <div key={plan.id} className="mb-4 border-b pb-4">
+                <div className="mb-2 text-center">
+                  <span className="text-lg font-semibold">{plan.name}</span>
+                  <span className="ml-2 bg-green-100 text-green-700 text-xs px-2 py-1 rounded">{plan.category}</span>
+                </div>
+                <p className="mb-3 text-gray-700 text-center">{plan.description}</p>
+                <div>
+                  <h4 className="font-semibold mb-1 text-sm text-gray-800">Meals:</h4>
+                  <ul className="list-disc list-inside text-gray-600 text-sm space-y-1">
+                    {plan.meals && plan.meals.map((meal, idx) => (
+                      <li key={idx}>{typeof meal === "string" ? meal : JSON.stringify(meal)}</li>
+                    ))}
+                  </ul>
+                </div>
+                <button
+                  onClick={() => handleRemoveSinglePlan(plan.id)}
+                  className="mt-3 py-1 px-3 rounded bg-red-400 text-white hover:bg-red-600 text-sm font-semibold"
+                  disabled={saving}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={handleDeleteUserPlan}
+              className="mt-6 py-2 px-4 rounded-lg w-full font-semibold transition bg-red-500 text-white hover:bg-red-600"
+              disabled={saving}
+            >
+              {saving ? "Deleting..." : "Remove All Diet Plans"}
+            </button>
+          </div>
+        )}
     </div>
   );
 };

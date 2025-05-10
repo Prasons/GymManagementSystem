@@ -1,43 +1,67 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { getCartItems, addToCart, removeFromCart } from "../api/cartApi";
+import { getAccessToken } from "../utils/auth";
 
 const ShoppingCartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const navigate = useNavigate();
 
-  // Fetch cart items from localStorage on mount
+  // Fetch cart items from the backend on mount
   useEffect(() => {
-    const storedItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-    setCartItems(storedItems);
-  }, []);
+    const fetchCartItems = async () => {
+      // Get token using the utility function for consistency
+      const token = getAccessToken();
+      if (!token) {
+        // If no token, redirect to login page
+        navigate("/login");
+        return;
+      }
+      try {
+        const items = await getCartItems(token);
+        setCartItems(items);
+      } catch (err) {
+        if (err.response && err.response.status === 401) {
+          // Token expired or invalid, redirect to login
+          navigate("/login");
+        } else {
+          console.error("Error fetching cart items:", err);
+        }
+      }
+    };
+
+    fetchCartItems();
+  }, [navigate]);
 
   // Update localStorage when cart changes
   const updateLocalStorage = (items) => {
     localStorage.setItem("cartItems", JSON.stringify(items));
   };
 
-  // Handle adding item to cart
-  const handleAddToCart = (item) => {
-    setCartItems((prevItems) => {
-      // Check if the item already exists in the cart
-      const itemIndex = prevItems.findIndex(
-        (cartItem) => cartItem.id === item.id
-      );
-
-      if (itemIndex !== -1) {
-        // Item exists, update its quantity
-        const updatedItems = [...prevItems];
-        updatedItems[itemIndex].quantity += 1;
-        updateLocalStorage(updatedItems); // Update localStorage
-        return updatedItems;
-      } else {
-        // Item doesn't exist, add it to the cart
-        const updatedItems = [...prevItems, { ...item, quantity: 1 }];
-        updateLocalStorage(updatedItems); // Update localStorage
-        return updatedItems;
-      }
-    });
+  // Handle adding item to cart via backend
+  const handleAddToCart = async (item) => {
+    const token = getAccessToken();
+    try {
+      await addToCart(item.id, 1, token);
+      setCartItems((prevItems) => {
+        const existingItem = prevItems.find(
+          (cartItem) => cartItem.id === item.id
+        );
+        if (existingItem) {
+          return prevItems.map((cartItem) =>
+            cartItem.id === item.id
+              ? { ...cartItem, quantity: cartItem.quantity + 1 }
+              : cartItem
+          );
+        } else {
+          return [...prevItems, { ...item, quantity: 1 }];
+        }
+      });
+    } catch (err) {
+      console.error("Error adding item to cart:", err);
+      alert("Failed to add item to cart.");
+    }
   };
 
   // Handle quantity change (increase or decrease)
@@ -62,12 +86,19 @@ const ShoppingCartPage = () => {
   };
 
   // Remove an item from the cart
-  const handleRemoveItem = (itemId) => {
-    setCartItems((prevItems) => {
-      const updatedItems = prevItems.filter((item) => item.id !== itemId);
-      updateLocalStorage(updatedItems); // Update localStorage
-      return updatedItems;
-    });
+  const handleRemoveItem = async (itemId) => {
+    const token = getAccessToken();
+    try {
+      await removeFromCart(itemId, token);
+      setCartItems((prevItems) => {
+        const updatedItems = prevItems.filter((item) => item.id !== itemId);
+        updateLocalStorage(updatedItems);
+        return updatedItems;
+      });
+    } catch (err) {
+      console.error("Error removing item from cart:", err);
+      alert("Failed to remove item from cart.");
+    }
   };
 
   // Calculate the total price of the cart

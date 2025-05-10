@@ -36,11 +36,22 @@ const AdminDashboard = () => {
       icon: <FaClipboardList />,
     },
     {
+      path: "/admin/workout-plan",
+      label: "Manage Workout Plans",
+      icon: <FaDumbbell />,
+    },
+    {
+      path: "/admin/training-schedule",
+      label: "Manage Training Schedules",
+      icon: <FaDumbbell />,
+    },
+    {
       path: "/admin/payment",
       label: "Manage Payments",
       icon: <FaMoneyCheckAlt />,
     },
     { path: "/admin/referral", label: "Manage Referrals", icon: <FaGift /> },
+    { path: "/admin/referral-dashboard", label: "Referral Dashboard", icon: <FaGift /> },
     { path: "/admin/classes", label: "Manage Classes", icon: <FaDumbbell /> },
   ];
 
