@@ -16,6 +16,9 @@ import Home from "./Pages/Home";
 import Dashboard from "./Pages/Dashboard";
 import Membership from "./Pages/MembershipPage";
 import DietPlan from "./Pages/DietPlan";
+import WorkoutPlanPage from "./Pages/WorkoutPlan";
+import TrainingSchedulePage from "./Pages/TrainingSchedule";
+import ReferralDashboard from "./Pages/ReferralDashboard";
 import ReferAFriend from "./Pages/ReferPage";
 import ShoppingCart from "./Pages/ShoppingCartPage";
 import GymEquipment from "./Pages/GymEquipmentPage";
@@ -26,11 +29,17 @@ import AdminLogin from "./admin/AdminLogin";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminMembers from "./admin/AdminMembers";
 import AdminDietPlan from "./admin/AdminDietPlan";
+import AdminWorkoutPlan from "./admin/AdminWorkoutPlan";
+import AdminTrainingSchedule from "./admin/AdminTrainingSchedule";
+import AdminReferralDashboard from "./admin/AdminReferralDashboard";
 import AdminReferral from "./admin/AdminReferral";
 import AdminProducts from "./admin/AdminProducts";
 import AdminTrainers from "./admin/AdminTrainers";
 import AdminPayment from "./admin/AdminPayment";
 import AdminClasses from "./admin/AdminClasses";
+
+// Components
+import PrivateRoute from "./Component/PrivateRoute";
 
 function ProtectedRoute({ children }) {
   if (!localStorage.getItem("adminAuth")) {
@@ -91,11 +100,16 @@ function App() {
       {!isLandingPage && (
         <AppBar position="static">
           <Toolbar style={{ display: "flex", justifyContent: "space-between" }}>
-            {isAuthenticated || isAdminAuthenticated ? (
+            {isAdminAuthenticated ? (
               <Button color="inherit" onClick={handleLogout}>
                 Logout
               </Button>
-            ) : (
+            ) : isAuthenticated ? (
+              <Button color="inherit" onClick={handleLogout}>
+                Logout
+              </Button>
+            ) : null}
+            {!isAuthenticated && !isAdminAuthenticated && (
               <>
                 <Button color="inherit" href="/login">
                   Login
@@ -113,27 +127,26 @@ function App() {
       )}
 
       <Routes>
+        {/* User Routes */}
         <Route
-          path="/"
+          path="/login"
+          element={<Login onLogin={() => setIsAuthenticated(true)} />}
+        />
+        <Route
+          path="/dashboard"
           element={
-            isAdminAuthenticated ? (
-              <Navigate to="/admin/dashboard" replace />
-            ) : isAuthenticated ? (
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Navigate to="/home" replace />
-            )
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
           }
         />
         <Route path="/signup" element={<SignUp />} />
-        <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/home" element={<Home />} />
-        <Route
-          path="/dashboard"
-          element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />}
-        />
         <Route path="/membership" element={<Membership />} />
         <Route path="/dietplan" element={<DietPlan />} />
+        <Route path="/workoutplan" element={<WorkoutPlanPage />} />
+        <Route path="/trainingschedule" element={<TrainingSchedulePage />} />
+        <Route path="/referral" element={<ReferralDashboard />} />
         <Route path="/referafriend" element={<ReferAFriend />} />
         <Route
           path="/shoppingcart"
@@ -144,15 +157,14 @@ function App() {
           element={<GymEquipment onAddToCart={handleAddToCart} />}
         />
         <Route path="/payment" element={<Payment />} />
-
         {/* Admin Routes */}
-        <Route path="admin-login" element={<AdminLogin />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
         <Route
           path="/admin/dashboard"
           element={
-            <ProtectedRoute>
+            <PrivateRoute adminOnly={true}>
               <AdminDashboard />
-            </ProtectedRoute>
+            </PrivateRoute>
           }
         />
         <Route
@@ -172,10 +184,34 @@ function App() {
           }
         />
         <Route
+          path="/admin/workout-plan"
+          element={
+            <ProtectedRoute>
+              <AdminWorkoutPlan />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/training-schedule"
+          element={
+            <ProtectedRoute>
+              <AdminTrainingSchedule />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/referral"
           element={
             <ProtectedRoute>
               <AdminReferral />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/referral-dashboard"
+          element={
+            <ProtectedRoute>
+              <AdminReferralDashboard />
             </ProtectedRoute>
           }
         />
@@ -211,6 +247,8 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/" element={<Navigate to="/home" />} />{" "}
+        {/* Redirect root path to /home */}
       </Routes>
     </>
   );

@@ -6,6 +6,7 @@ import {
   FaShoppingCart,
   FaDumbbell,
   FaMoneyBillWave,
+  FaGift,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -25,6 +26,9 @@ const Dashboard = () => {
   const options = [
     { name: "Membership", icon: <FaCreditCard />, path: "/membership" },
     { name: "Diet Plan", icon: <FaClipboardList />, path: "/dietplan" },
+    { name: "Workout Plan", icon: <FaDumbbell />, path: "/workoutplan" },
+    { name: "Training Schedule", icon: <FaDumbbell />, path: "/trainingschedule" },
+    { name: "Referral Program", icon: <FaGift />, path: "/referral" },
     { name: "Refer a Friend", icon: <FaUserFriends />, path: "/referafriend" },
     { name: "Shopping Cart", icon: <FaShoppingCart />, path: "/shoppingcart" },
     { name: "Gym Equipment", icon: <FaDumbbell />, path: "/gymequipment" },
